@@ -1,18 +1,27 @@
+/// Gallery of all 33 ported shadercn orbs.
+///
+/// The home page shows every orb on a responsive grid; tapping a tile opens
+/// its debug page (`orb_detail_page.dart`) with live state, colour and
+/// parameter controls.
+library;
+
 import 'package:flutter/material.dart';
 
-import 'orb_01.dart';
+import 'orb_detail_page.dart';
+import 'orb_runtime.dart';
+import 'orbs.dart';
 
 void main() {
-  runApp(const Orb01DemoApp());
+  runApp(const OrbCollectionApp());
 }
 
-class Orb01DemoApp extends StatelessWidget {
-  const Orb01DemoApp({super.key});
+class OrbCollectionApp extends StatelessWidget {
+  const OrbCollectionApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ORB-01 · Flutter Shader',
+      title: 'Orb Collection · 33 Flutter Shaders',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -23,40 +32,26 @@ class Orb01DemoApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const Orb01DemoPage(),
+      home: const OrbGalleryPage(),
     );
   }
 }
 
-class Orb01DemoPage extends StatefulWidget {
-  const Orb01DemoPage({super.key});
+class OrbGalleryPage extends StatefulWidget {
+  const OrbGalleryPage({super.key});
 
   @override
-  State<Orb01DemoPage> createState() => _Orb01DemoPageState();
+  State<OrbGalleryPage> createState() => _OrbGalleryPageState();
 }
 
-class _Orb01DemoPageState extends State<Orb01DemoPage> {
-  static const List<({String label, String hex, Color color})> _tints =
-      <({String label, String hex, Color color})>[
-    (label: 'Crystal', hex: '#ffffff', color: Color(0xFFFFFFFF)),
-    (label: 'Ice', hex: '#8fd8ff', color: Color(0xFF8FD8FF)),
-    (label: 'Iris', hex: '#b79bff', color: Color(0xFFB79BFF)),
-    (label: 'Ember', hex: '#ff9e7a', color: Color(0xFFFF9E7A)),
-    (label: 'Jade', hex: '#8ff0c0', color: Color(0xFF8FF0C0)),
-  ];
-
-  OrbState _state = OrbState.idle;
-  String _tint = '#ffffff';
-  double _speed = 0.5;
-  double _turb = 0.3;
-  double _disperse = 1;
+class _OrbGalleryPageState extends State<OrbGalleryPage> {
   bool _paused = false;
-
-  void _setState(OrbState state) => setState(() => _state = state);
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final columns = width >= 1100 ? 4 : (width >= 700 ? 3 : 2);
     return Scaffold(
       body: DecoratedBox(
         decoration: const BoxDecoration(
@@ -67,284 +62,139 @@ class _Orb01DemoPageState extends State<Orb01DemoPage> {
           ),
         ),
         child: SafeArea(
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                    child: Column(
-                      children: <Widget>[
-                        Text(
-                          'ORB-01',
-                          style: textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w300,
-                            letterSpacing: 8,
-                          ),
+          child: CustomScrollView(
+            slivers: <Widget>[
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                sliver: SliverToBoxAdapter(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              'ORB COLLECTION',
+                              style: textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w300,
+                                letterSpacing: 8,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${allOrbVariants.length} shader effects · Flutter ports of shadercn ORB-01 ~ ORB-${allOrbVariants.length.toString().padLeft(2, '0')}',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: const Color(0x99FFFFFF),
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'cut-glass orb · dispersive, turbulent interior',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: const Color(0x99FFFFFF),
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        Orb01(
-                          size: 280,
-                          state: _state,
-                          paused: _paused,
-                          colors: <String, String>{'tint': _tint},
-                          params: <String, double>{
-                            'speed': _speed,
-                            'turb': _turb,
-                            'disperse': _disperse,
-                          },
-                          semanticsLabel:
-                              'Animated cut-glass orb rendered with a Flutter shader',
-                        ),
-                        const SizedBox(height: 32),
-                        _ControlsCard(
-                          state: _state,
-                          tint: _tint,
-                          tints: _tints,
-                          speed: _speed,
-                          turb: _turb,
-                          disperse: _disperse,
-                          paused: _paused,
-                          onStateChanged: _setState,
-                          onTintChanged: (String hex) => setState(() => _tint = hex),
-                          onSpeedChanged: (double v) => setState(() => _speed = v),
-                          onTurbChanged: (double v) => setState(() => _turb = v),
-                          onDisperseChanged: (double v) => setState(() => _disperse = v),
-                          onPausedChanged: (bool v) => setState(() => _paused = v),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ),
+                      ),
+                      IconButton.filledTonal(
+                        tooltip: _paused ? 'Resume all' : 'Pause all',
+                        onPressed: () => setState(() => _paused = !_paused),
+                        icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
+                      ),
+                    ],
                   ),
                 ),
-              );
-              },
-            ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.78,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (BuildContext context, int index) {
+                      final variant = allOrbVariants[index];
+                      return _OrbTile(
+                        variant: variant,
+                        paused: _paused,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => OrbDetailPage(variant: variant),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: allOrbVariants.length,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 }
 
-class _ControlsCard extends StatelessWidget {
-  const _ControlsCard({
-    required this.state,
-    required this.tint,
-    required this.tints,
-    required this.speed,
-    required this.turb,
-    required this.disperse,
+class _OrbTile extends StatelessWidget {
+  const _OrbTile({
+    required this.variant,
     required this.paused,
-    required this.onStateChanged,
-    required this.onTintChanged,
-    required this.onSpeedChanged,
-    required this.onTurbChanged,
-    required this.onDisperseChanged,
-    required this.onPausedChanged,
-  });
-
-  final OrbState state;
-  final String tint;
-  final List<({String label, String hex, Color color})> tints;
-  final double speed;
-  final double turb;
-  final double disperse;
-  final bool paused;
-  final ValueChanged<OrbState> onStateChanged;
-  final ValueChanged<String> onTintChanged;
-  final ValueChanged<double> onSpeedChanged;
-  final ValueChanged<double> onTurbChanged;
-  final ValueChanged<double> onDisperseChanged;
-  final ValueChanged<bool> onPausedChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0x0AFFFFFF),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0x1AFFFFFF)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text('STATE', style: _labelStyle(textTheme)),
-          const SizedBox(height: 10),
-          SegmentedButton<OrbState>(
-            segments: const <ButtonSegment<OrbState>>[
-              ButtonSegment<OrbState>(value: OrbState.idle, label: Text('idle')),
-              ButtonSegment<OrbState>(
-                value: OrbState.thinking,
-                label: Text('thinking'),
-              ),
-              ButtonSegment<OrbState>(
-                value: OrbState.speaking,
-                label: Text('speaking'),
-              ),
-            ],
-            selected: <OrbState>{state},
-            onSelectionChanged: (Set<OrbState> selection) =>
-                onStateChanged(selection.first),
-          ),
-          const SizedBox(height: 22),
-          Text('TINT', style: _labelStyle(textTheme)),
-          const SizedBox(height: 10),
-          Row(
-            children: <Widget>[
-              for (final t in tints)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: _TintSwatch(
-                    color: t.color,
-                    label: t.label,
-                    selected: t.hex == tint,
-                    onTap: () => onTintChanged(t.hex),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Text('SHADER PARAMS', style: _labelStyle(textTheme)),
-          const SizedBox(height: 4),
-          Text(
-            'Overrides win over the per-state presets.',
-            style: textTheme.bodySmall?.copyWith(color: const Color(0x66FFFFFF)),
-          ),
-          const SizedBox(height: 8),
-          _ParamSlider(
-            label: 'speed',
-            value: speed,
-            min: 0.015,
-            max: 10,
-            onChanged: onSpeedChanged,
-          ),
-          _ParamSlider(
-            label: 'turbulence',
-            value: turb,
-            min: 0,
-            max: 5,
-            onChanged: onTurbChanged,
-          ),
-          _ParamSlider(
-            label: 'dispersion',
-            value: disperse,
-            min: 0,
-            max: 5,
-            onChanged: onDisperseChanged,
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: <Widget>[
-              Text('paused', style: _labelStyle(textTheme)),
-              const Spacer(),
-              Switch(value: paused, onChanged: onPausedChanged),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  static TextStyle? _labelStyle(TextTheme textTheme) {
-    return textTheme.labelSmall?.copyWith(
-      color: const Color(0x99FFFFFF),
-      letterSpacing: 2,
-    );
-  }
-}
-
-class _TintSwatch extends StatelessWidget {
-  const _TintSwatch({
-    required this.color,
-    required this.label,
-    required this.selected,
     required this.onTap,
   });
 
-  final Color color;
-  final String label;
-  final bool selected;
+  final OrbVariant variant;
+  final bool paused;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: label,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: selected ? Colors.white : const Color(0x33FFFFFF),
-              width: selected ? 2.5 : 1,
-            ),
-            boxShadow: <BoxShadow>[
-              if (selected)
-                BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 12),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ParamSlider extends StatelessWidget {
-  const _ParamSlider({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: <Widget>[
-          SizedBox(width: 86, child: Text(label, style: textTheme.bodySmall)),
-          Expanded(
-            child: Slider(
-              value: value.clamp(min, max),
-              min: min,
-              max: max,
-              label: value.toStringAsFixed(2),
-              onChanged: onChanged,
-            ),
-          ),
-          SizedBox(
-            width: 44,
-            child: Text(
-              value.toStringAsFixed(2),
-              textAlign: TextAlign.right,
-              style: textTheme.bodySmall?.copyWith(color: const Color(0x99FFFFFF)),
-            ),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0x0AFFFFFF),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0x1AFFFFFF)),
+        ),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            // The label stack is about 44px tall; the orb takes the rest,
+            // never wider than the tile.
+            final orbSize = (constraints.maxHeight - 44).clamp(48.0, constraints.maxWidth);
+            return Column(
+              children: <Widget>[
+                ShaderOrb(
+                  variant: variant,
+                  size: orbSize,
+                  paused: paused,
+                  semanticsLabel: '${variant.label}: ${variant.note}',
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  variant.label,
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: 3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  variant.note,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: const Color(0x66FFFFFF),
+                    fontSize: 10,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

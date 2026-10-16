@@ -57,9 +57,42 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # ORB-01 fragment shader (compiled ahead-of-time for native, to SkSL for web).
+  # ORB-01 ~ ORB-33 fragment shaders (compiled ahead-of-time for native, to
+  # SkSL for web).
   shaders:
     - shaders/orb_01.frag
+    - shaders/orb_02.frag
+    - shaders/orb_03.frag
+    - shaders/orb_04.frag
+    - shaders/orb_05.frag
+    - shaders/orb_06.frag
+    - shaders/orb_07.frag
+    - shaders/orb_08.frag
+    - shaders/orb_09.frag
+    - shaders/orb_10.frag
+    - shaders/orb_11.frag
+    - shaders/orb_12.frag
+    - shaders/orb_13.frag
+    - shaders/orb_14.frag
+    - shaders/orb_15.frag
+    - shaders/orb_16.frag
+    - shaders/orb_17.frag
+    - shaders/orb_18.frag
+    - shaders/orb_19.frag
+    - shaders/orb_20.frag
+    - shaders/orb_21.frag
+    - shaders/orb_22.frag
+    - shaders/orb_23.frag
+    - shaders/orb_24.frag
+    - shaders/orb_25.frag
+    - shaders/orb_26.frag
+    - shaders/orb_27.frag
+    - shaders/orb_28.frag
+    - shaders/orb_29.frag
+    - shaders/orb_30.frag
+    - shaders/orb_31.frag
+    - shaders/orb_32.frag
+    - shaders/orb_33.frag
 
   # To add assets to your application, add an assets section, like this:
   # assets:
