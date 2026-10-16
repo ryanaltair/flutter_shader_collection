@@ -3,12 +3,17 @@
 /// The home page shows every orb on a responsive grid; tapping a tile opens
 /// its debug page (`orb_detail_page.dart`) with live state, colour and
 /// parameter controls.
+///
+/// The app uses `package:flutter/widgets.dart` exclusively — no
+/// `package:flutter/material.dart` — so the shared control replacements live in
+/// `orb_ui.dart`.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import 'orb_detail_page.dart';
 import 'orb_runtime.dart';
+import 'orb_ui.dart';
 import 'orbs.dart';
 
 void main() {
@@ -20,18 +25,13 @@ class OrbCollectionApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return WidgetsApp(
       title: 'Orb Collection · 33 Flutter Shaders',
+      color: kBgBottom,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFF05060A),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF8FD8FF),
-          brightness: Brightness.dark,
-        ),
-      ),
+      pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) {
+        return OrbFadeRoute<T>(settings: settings, builder: builder);
+      },
       home: const OrbGalleryPage(),
     );
   }
@@ -47,91 +47,82 @@ class OrbGalleryPage extends StatefulWidget {
 class _OrbGalleryPageState extends State<OrbGalleryPage> {
   bool _paused = false;
 
+  void _togglePaused() => setState(() => _paused = !_paused);
+
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final width = MediaQuery.sizeOf(context).width;
-    final columns = width >= 1100 ? 4 : (width >= 700 ? 3 : 2);
-    return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -0.3),
-            radius: 1.2,
-            colors: <Color>[Color(0xFF161A2E), Color(0xFF05060A)],
-          ),
-        ),
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: <Widget>[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                sliver: SliverToBoxAdapter(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              'ORB COLLECTION',
-                              style: textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w300,
-                                letterSpacing: 8,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '${allOrbVariants.length} shader effects · Flutter ports of shadercn ORB-01 ~ ORB-${allOrbVariants.length.toString().padLeft(2, '0')}',
-                              style: textTheme.bodySmall?.copyWith(
-                                color: const Color(0x99FFFFFF),
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton.filledTonal(
-                        tooltip: _paused ? 'Resume all' : 'Pause all',
-                        onPressed: () => setState(() => _paused = !_paused),
-                        icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                sliver: SliverGrid(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.78,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
-                      final variant = allOrbVariants[index];
-                      return _OrbTile(
-                        variant: variant,
-                        paused: _paused,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => OrbDetailPage(variant: variant),
+    return DecoratedBox(
+      decoration: kBackdrop,
+      child: SafeArea(
+        child: CustomScrollView(
+          slivers: <Widget>[
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          const Text('ORB COLLECTION', style: kTitleStyle),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${allOrbVariants.length} shader effects · Flutter ports of shadercn ORB-01 ~ ORB-${allOrbVariants.length.toString().padLeft(2, '0')}',
+                            style: kSubtitleStyle,
                           ),
-                        ),
-                      );
-                    },
-                    childCount: allOrbVariants.length,
-                  ),
+                        ],
+                      ),
+                    ),
+                    OrbIconButton(
+                      icon: _paused ? OrbIcon.play : OrbIcon.pause,
+                      tooltip: _paused ? 'Resume all' : 'Pause all',
+                      onPressed: _togglePaused,
+                      filled: true,
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _columns(context),
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.78,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    final variant = allOrbVariants[index];
+                    return _OrbTile(
+                      variant: variant,
+                      paused: _paused,
+                      onTap: () => Navigator.of(context).push(
+                        OrbFadeRoute<void>(
+                          builder: (_) => OrbDetailPage(variant: variant),
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: allOrbVariants.length,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  int _columns(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width >= 1100) {
+      return 4;
+    }
+    return width >= 700 ? 3 : 2;
   }
 }
 
@@ -148,15 +139,14 @@ class _OrbTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0x0AFFFFFF),
+          color: kFill,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0x1AFFFFFF)),
+          border: Border.all(color: kHairline),
         ),
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
@@ -172,24 +162,14 @@ class _OrbTile extends StatelessWidget {
                   semanticsLabel: '${variant.label}: ${variant.note}',
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  variant.label,
-                  style: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 3,
-                  ),
-                ),
+                Text(variant.label, style: kLabelLargeStyle),
                 const SizedBox(height: 2),
                 Text(
                   variant.note,
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: const Color(0x66FFFFFF),
-                    fontSize: 10,
-                    height: 1.25,
-                  ),
+                  style: kBodyTinyStyle,
                 ),
               ],
             );

@@ -2,11 +2,16 @@
 /// the variant's metadata (state presets, colour definitions, parameter
 /// ranges). Overrides win over the per-state presets, exactly like the
 /// original component's `params` / `colors` props.
+///
+/// Built from `package:flutter/widgets.dart` only; the `AppBar`,
+/// `SegmentedButton`, `Slider` and `Switch` replacements come from
+/// `orb_ui.dart`.
 library;
 
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import 'orb_runtime.dart';
+import 'orb_ui.dart';
 
 /// Extra swatches offered for every colour slot, on top of the variant's own
 /// default.
@@ -44,106 +49,109 @@ class _OrbDetailPageState extends State<OrbDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(variant.label),
-        backgroundColor: Colors.transparent,
-        actions: <Widget>[
-          IconButton(
-            tooltip: 'Reset overrides',
-            onPressed: _reset,
-            icon: const Icon(Icons.restart_alt),
-          ),
-        ],
-      ),
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -0.3),
-            radius: 1.2,
-            colors: <Color>[Color(0xFF161A2E), Color(0xFF05060A)],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Center(
-                  child: ShaderOrb(
-                    variant: variant,
-                    size: 280,
-                    state: _state,
-                    paused: _paused,
-                    params: _params.isEmpty ? null : _params,
-                    colors: _colors.isEmpty ? null : _colors,
-                    semanticsLabel: '${variant.label}: ${variant.note}',
+    return DecoratedBox(
+      decoration: kBackdrop,
+      child: SafeArea(
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Row(
+                children: <Widget>[
+                  OrbIconButton(
+                    icon: OrbIcon.back,
+                    tooltip: 'Back',
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  variant.note,
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: const Color(0x99FFFFFF),
-                    letterSpacing: 1,
+                  const SizedBox(width: 4),
+                  Expanded(child: Text(variant.label, style: kPageTitleStyle)),
+                  OrbIconButton(
+                    icon: OrbIcon.reset,
+                    tooltip: 'Reset overrides',
+                    onPressed: _reset,
                   ),
-                ),
-                const SizedBox(height: 24),
-                _sectionLabel(textTheme, 'STATE'),
-                SegmentedButton<OrbState>(
-                  segments: const <ButtonSegment<OrbState>>[
-                    ButtonSegment<OrbState>(value: OrbState.idle, label: Text('idle')),
-                    ButtonSegment<OrbState>(value: OrbState.thinking, label: Text('thinking')),
-                    ButtonSegment<OrbState>(value: OrbState.speaking, label: Text('speaking')),
-                  ],
-                  selected: <OrbState>{_state},
-                  onSelectionChanged: (Set<OrbState> selection) =>
-                      setState(() => _state = selection.first),
-                ),
-                const SizedBox(height: 24),
-                if (variant.colors.isNotEmpty) ...<Widget>[
-                  _sectionLabel(textTheme, 'COLORS'),
-                  for (final color in variant.colors) ...<Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: _ColorRow(
-                        def: color,
-                        currentHex: _colors[color.key] ?? color.defaultHex,
-                        onChanged: (String hex) =>
-                            setState(() => _colors[color.key] = hex),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Center(
+                      child: ShaderOrb(
+                        variant: variant,
+                        size: 280,
+                        state: _state,
+                        paused: _paused,
+                        params: _params.isEmpty ? null : _params,
+                        colors: _colors.isEmpty ? null : _colors,
+                        semanticsLabel: '${variant.label}: ${variant.note}',
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      variant.note,
+                      textAlign: TextAlign.center,
+                      style: kSubtitleStyle,
+                    ),
+                    const SizedBox(height: 24),
+                    _sectionLabel('STATE'),
+                    OrbSegmentedControl<OrbState>(
+                      segments: const <({OrbState value, String label})>[
+                        (value: OrbState.idle, label: 'idle'),
+                        (value: OrbState.thinking, label: 'thinking'),
+                        (value: OrbState.speaking, label: 'speaking'),
+                      ],
+                      selected: _state,
+                      onChanged: (OrbState value) => setState(() => _state = value),
+                    ),
+                    const SizedBox(height: 24),
+                    if (variant.colors.isNotEmpty) ...<Widget>[
+                      _sectionLabel('COLORS'),
+                      for (final color in variant.colors)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: _ColorRow(
+                            def: color,
+                            currentHex: _colors[color.key] ?? color.defaultHex,
+                            onChanged: (String hex) =>
+                                setState(() => _colors[color.key] = hex),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                    ],
+                    _sectionLabel('SHADER PARAMS'),
+                    const Text(
+                      'Overrides win over the per-state presets.',
+                      style: kBodyTinyStyle,
+                    ),
+                    const SizedBox(height: 8),
+                    for (final param in variant.params)
+                      _ParamSlider(
+                        def: param,
+                        value: _params[param.key] ?? _displayValue(param),
+                        onChanged: (double value) =>
+                            setState(() => _params[param.key] = value),
+                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: <Widget>[
+                        const Text('paused', style: kLabelSmallStyle),
+                        const Spacer(),
+                        OrbToggleSwitch(
+                          value: _paused,
+                          onChanged: (bool v) => setState(() => _paused = v),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
                   ],
-                  const SizedBox(height: 24),
-                ],
-                _sectionLabel(textTheme, 'SHADER PARAMS'),
-                Text(
-                  'Overrides win over the per-state presets.',
-                  style: textTheme.bodySmall?.copyWith(color: const Color(0x66FFFFFF)),
                 ),
-                const SizedBox(height: 8),
-                for (final param in variant.params)
-                  _ParamSlider(
-                    def: param,
-                    value: _params[param.key] ?? _displayValue(param),
-                    onChanged: (double value) =>
-                        setState(() => _params[param.key] = value),
-                  ),
-                const SizedBox(height: 8),
-                Row(
-                  children: <Widget>[
-                    Text('paused', style: _labelStyle(textTheme)),
-                    const Spacer(),
-                    Switch(value: _paused, onChanged: (bool v) => setState(() => _paused = v)),
-                  ],
-                ),
-                const SizedBox(height: 32),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -156,17 +164,10 @@ class _OrbDetailPageState extends State<OrbDetailPage> {
     return preset[param.key] ?? param.defaultValue;
   }
 
-  static TextStyle? _labelStyle(TextTheme textTheme) {
-    return textTheme.labelSmall?.copyWith(
-      color: const Color(0x99FFFFFF),
-      letterSpacing: 2,
-    );
-  }
-
-  static Widget _sectionLabel(TextTheme textTheme, String text) {
+  static Widget _sectionLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Text(text, style: _labelStyle(textTheme)),
+      child: Text(text, style: kLabelSmallStyle),
     );
   }
 }
@@ -184,7 +185,6 @@ class _ColorRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final swatches = <({String label, String hex})>[
       (label: 'default', hex: def.defaultHex),
       ..._extraSwatches,
@@ -192,10 +192,7 @@ class _ColorRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          '${def.key} · ${def.label}',
-          style: textTheme.bodySmall?.copyWith(color: const Color(0xCCFFFFFF)),
-        ),
+        Text('${def.key} · ${def.label}', style: kBodySmallStyle),
         const SizedBox(height: 6),
         Wrap(
           spacing: 10,
@@ -230,8 +227,9 @@ class _Swatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: '$label · $hex',
+    return Semantics(
+      label: '$label · $hex',
+      selected: selected,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
@@ -241,7 +239,7 @@ class _Swatch extends StatelessWidget {
             color: _parseHex(hex),
             shape: BoxShape.circle,
             border: Border.all(
-              color: selected ? Colors.white : const Color(0x33FFFFFF),
+              color: selected ? kTextPrimary : const Color(0x33FFFFFF),
               width: selected ? 2.5 : 1,
             ),
             boxShadow: <BoxShadow>[
@@ -268,7 +266,6 @@ class _ParamSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final clamped = value.clamp(def.min, def.max);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -278,26 +275,26 @@ class _ParamSlider extends StatelessWidget {
             width: 110,
             child: Text(
               def.key,
-              style: textTheme.bodySmall,
+              style: kBodySmallStyle,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Expanded(
-            child: Slider(
+            child: OrbSlider(
               value: clamped,
               min: def.min,
               max: def.max,
-              divisions: def.divisions,
-              label: clamped.toStringAsFixed(3),
+              step: def.step,
               onChanged: onChanged,
             ),
           ),
+          const SizedBox(width: 12),
           SizedBox(
-            width: 52,
+            width: 44,
             child: Text(
               clamped.toStringAsFixed(2),
               textAlign: TextAlign.right,
-              style: textTheme.bodySmall?.copyWith(color: const Color(0x99FFFFFF)),
+              style: kBodySmallStyle,
             ),
           ),
         ],
